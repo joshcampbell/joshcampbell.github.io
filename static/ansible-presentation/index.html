@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Josh Tries to Explain Ansible</title>
+    <script src="weenote.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Arvo' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Slab:400,300' rel='stylesheet' type='text/css'>
+
+<style type="text/css">
+* { font-family: 'Arvo'; }
+li { list-style-type: square; font-family: "Roboto Slab" }
+pre, pre * { font-family: "Inconsolata"; }
+body { background-color: #002b36;
+       color: #839496; }
+h1 { color: #268bd2; }
+h3 { border-bottom: solid; padding-bottom: 15px; color: #93a1a1; }
+.keyword { color: #d33682 }
+.faded { color: #586e75 }
+</style>
+
+</head>
+<body>
+
+<div><h1>Ansible</h1></div>
+<div>
+
+<h3>A Configuration Manager</h3>
+<ul><li>CFEngine</li>
+    <li>Puppet</li>
+    <li>Chef</li>
+    <li>Salt</li>
+    <li>NixOS</li>
+</ul>
+</div>
+
+<div><h3>A Configuration Manager</h3>
+  <ul><li>Define config. formats</li>
+      <li>Configure servers</li>
+      <li>Most use daemons</li>
+      <li>Ansible uses ssh</li>
+  </ul>
+</div>
+
+<div><h2>I. Ansible Basics<h2></div>
+
+<div>
+<h3>Specify Configuration With <span class="keyword">Tasks</span></h3>
+<pre>
+service: name=httpd state=started
+
+mount: name=/global state=mounted fstype=nfs
+       src=ctknas:/volume3/apridev_global
+
+subversion: repo=svn://svn.ctkodm.com/apricot/ 
+            dest=/var/www/deploy
+</pre>
+</div>
+
+<div>
+<h3><span class="keyword">Playbooks</span> Have Many Tasks</h3>
+<pre>
+#  this is a working ansible playbook
+---
+- hosts: all
+  user: root
+  tasks: 
+
+    - name: "apache 2 should be installed"
+      yum: name=apache2 state=present
+
+    - name: "http daemon should be running"
+      service: name=httpd state=started
+</pre>
+</div>
+
+<div><h3>Playbooks are YAML</h3>
+<pre>
+---
+<span class="faded"># Yaml was designed to be human-editable
+# and mostly compatible with JSON. The
+# same basic building blocks (strings,
+# numbers, arrays, and hashes) are present.</span>
+
+key_one: value_one
+key_two: "value two"
+key_three:
+  - array_of
+  - two_strings
+  - "this is also a string"
+key_four: [ "this is also", [ an_array ] ]
+
+<span class="faded"># Yaml is a great format for configuration files,
+# since it's easy to read and write and can be
+# used to express complex data structures without
+# your having to write special parsing logic.</span>
+
+</pre>
+</div>
+
+<div><h1>Example</h1></div>
+
+<div><h3>Loops</h3>
+<pre>
+<span class="faded"># Generally used inline, with the 'item' variable being
+# implcitly populated by our use of with_items:</span>
+
+- name: ensure basic dependencies are present
+  yum: name={{ item }} state=installed
+  with_items:
+    - tree
+    - tmux
+
+- name: equivalent statement
+  yum: name={{ item }} state=installed
+  with_items: [ tree, tmux ]
+  
+<span class="faded"># You can also define arrays of items in configuration
+# files, which you can use to bind lists of things to
+# host groups.</span>
+</pre>
+</div>
+
+<div><h3>Registration and Conditionals</h3>
+<pre>
+<span class="faded"># This is part of the apricot-ansible replication setup.</span>
+
+- name: check replication status
+  mysql_replication: mode=getslave
+  ignore_errors: true
+  register: slave_status
+
+- name: check replication status
+  mysql_replication: mode=getslave
+  ignore_errors: true
+  register: slave_status
+
+- name: if replication is not actually running, throw an error
+  mysql_replication: mode=stopslave
+  fail: msg="failed to configure replication"
+  when: slave_status|failed or slave_status.Slave_SQL_Running != "Yes"
+</pre>
+</div>
+
+<div><h3>String manipulation with <span class="keyword">Python</span></h3>
+<pre>
+<span class="faded"># from the database replication playbook</span>
+
+- name: load the replication status metadata into a variable
+  command: cat /var/lib/mysql/xtrabackup_binlog_info
+  register: binlog_info
+
+- name: parse the metadata into more useful variables
+  set_fact:
+    xtrabackup_file_name: '{{ binlog_info.stdout.replace("\n","").split("\t")[0] }}'
+    xtrabackup_master_pos: '{{ binlog_info.stdout.replace("\n","").split("\t")[1] }}'
+
+<span class="faded"># it's easy to figure everything out by fumbling with python -i</span>
+
+</pre>
+</div>
+
+<div><h3><span class="keyword">Roles</span> Group Tasks Logically</h3>
+<p>
+<ul>
+<li>I couldn't get output from 'tree' to paste properly.</li>
+<li>I should just switch to a terminal and show it.</li>
+<li>Look at the lamp-haproxy example from the official example repository.</li>
+</ul>
+</p>
+</div>
+
+<div><h3><span class="keyword">Inventories</span> Group Hosts</h3>
+<pre>
+[lab-database-master]
+10.3.10.26
+
+[lab-database-global]
+10.3.10.23
+
+[lab-database-replication]
+10.3.10.24 replicates=apridbm1
+
+[lab-database-monitoring]
+10.3.10.28
+
+[lab-web]
+10.3.10.25
+</pre>
+</div>
+
+<div><h2>II. Ansible for Apricot</h2></div>
+
+<div><h3>Hosts and Roles</h3>
+<ul>
+<li>Servers differ by purpose ("role")</li>
+<li>Servers differ by location</li>
+<li><span class="keyword">location</span>-groups, <span class="keyword">functional</span> groups, <span class="keyword">cross</span> groups</li>
+</ul>
+</div>
+
+<div><h3>Location Groups</h3>
+<ul>
+<li>lab</li>
+<li>df</li>
+<li>standalone</li>
+</ul>
+</div>
+
+<div><h3>Functional Groups</h3>
+<ul>
+<li>web</li>
+<li>monitoring</li>
+<li>database-global</li>
+<li>database-master</li>
+<li>database-replication</li>
+</ul>
+</div>
+
+<div><h3>Some Cross Groups</h3>
+<pre>
+[lab-database-master]
+10.3.10.26
+
+[lab-database-global]
+10.3.10.23
+
+[lab-database-replication]
+10.3.10.24 replicates=apridbm1
+
+[lab-database-monitoring]
+10.3.10.28
+
+[lab-web]
+10.3.10.25
+</pre>
+</div>
+
+<div><h3>Tree the project and look at stuff</h3>
+<ul>
+<li>I bet you can get tree to output unicode</li>
+<li>You can get it to do html special characters</li>
+<li>But that also didn't work for me</li>
+</ul>
+</div>
+
+<div><h3>Running Playbooks</h3>
+<pre>
+#!/bin/bash
+
+<span class="faded"># Push your SSH keys to all the hosts in data foundry:</span>
+
+ansible-playbook -i ./inventory.df/ install-keys.yml
+
+<span class="faded"># Set up replication between abridbm1 and apridbro1 in the lab:</span>
+
+ansible-playbook -i ./inventory.lab/ \
+                 -l "apridbm1,apridbro1" \
+                 replication.yml
+
+<span class="faded"># Ensure basic configuration for all lab hosts,
+# skipping tasks tagged with 'slow':</span>
+
+ansible-playbok -i ./inventory.lab/ site.yml --skip-tags=slow
+
+</pre>
+</div>
+
+<div><h3><i>ad hoc</i> Commands</h3>
+<pre>
+#!/bin/bash
+
+<span class="faded"># Echo back an arbitrary string</span>
+
+ansible all -i ./inventory.lab" -a 'echo i got that thing you sent'
+
+<span class="faded"># Tell all the hosts in your botnet to ping the target 10,000,000 times</span>
+
+ansible botnet -i botnet.ini -a 'ping -n 1000000 ctk.apricot.info' -f 10
+
+<span class="faded"># Grab the contents of all files under /etc with cobbler in the path</span>
+
+ansible lab raw -i ./inventory.lab/ -a 'find /etc | grep cobbler | xargs cat'
+ 
+</pre>
+</div>
+
+<div><h1>Example</h1></div>
+
+<div><h2>III. What is Cobbler?</h2></div>
+
+<div><h3>A network install server</h3>
+<ul>
+<li>Many services cobbled together</li>
+<li>Most significantly PXE</li>
+<li>Also keeps a database of system info</li>
+</ul>
+</div>
+
+<div><h3>Cobbler/Ansible control flow</h3>
+<ol>
+<li>Administrator registers new machine's MAC</li>
+<li>Assigns a role, which gets written into /etc during install</li>
+<li>Machine network boots, cobbler serves it a custom install application</li>
+<li>Post-install kickstart script runs an ansible-pull</li>
+</ol>
+</div>
+
+<div><h2>IV. Project Status</h2>
+<ul>
+<li>90% done?</li>
+<li>Make more secure</li>
+<li>Canadian standalone demo</li>
+<li>Ansible ansible playbook</li>
+</ul>
+</div>
+
+<div><h1>End</h1></div>
+
+</body>
+</html>
