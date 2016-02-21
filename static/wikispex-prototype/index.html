@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Wikispex</title>
+
+<link rel="stylesheet" type="text/css" href="lib/bootstrap/css/bootstrap.css" />
+<link rel="stylesheet" type="text/css" href="app.css"/>
+<script src="lib/iso8601.js"></script>
+<script src="lib/jquery-1.8.3.js"></script>
+<script src="lib/underscore.js"></script>
+<script src="lib/backbone.js"></script>
+<script src="lib/bootstrap/js/bootstrap.js"></script>
+<script src="lib/flot-0.7/jquery.flot.js"></script>
+<script src="lib/flot-0.7/jquery.flot.pie.js"></script>
+<script src="lib/flot-0.7/jquery.flot.selection.js"></script>
+<script src="lib/flot-0.7/jquery.flot.navigation.js"></script>
+<script src="lib/jquery.flot.axislabels.js"></script>
+<script src="lib/wiky/wiky.js"></script>
+<script src="wiki.js"></script>
+<script src="app.js"></script>
+</head>
+<body><div id="scroll-wrapper" style="position:fixed;height:100%;width:100%;margin:0;padding:0;top:0;left:0;right:0;bottom:0;overflow-y:scroll">
+  <div class="navbar navbar-inverse navbar-fixed-top">
+  	<div class="navbar-inner">
+  		<div class="container-fluid">
+  		<a class="brand" href="#home">Wikispex</a>
+    	<form id="nav-form" class="pull-right">
+   			<div class="input-prepend input-append">
+	    		<span class="btn-group">
+	    			<button class="btn dropdown-toggle" data-toggle="dropdown" type="button">	    			<span id="icon-search-mode" class="icon-file"></span>
+	    			<span class="caret" style="margin-top:8px"></span> </button>
+	    			<ul class="dropdown-menu">
+	    				<li><a href="#" id="btn-search-articles"><span class="icon-file"></span> Search Articles</a></li>
+	    				<li><a href="#" id="btn-search-users"><span class="icon-user"></span> Search Users</a></li>
+	    			</ul>
+	    		</span>
+	    		<input type="text" id="searchbar" class="span4" autocomplete="off"/>
+	   			<span class="btn-group">
+	  				<button class="btn" type="submit"><span class="icon-search"></span></button>
+	  			</span>
+    		</div>
+    	</form>
+		</div>
+	</div>
+  </div>
+  <div id="content" class="container-fluid" style="position:fixed;top:65px;left:0px;right:30px;bottom:0px;">
+  	<div id="welcome" style="min-height:600px;background:#fff url('augur.png') no-repeat right bottom"> <!-- root content node: welcome message -->
+  		<div class="row-fluid">
+	  		<div class="hero-unit span8">
+	  			<h1>Wikispex</h1>
+	  			<h2>Reading the Entrails of Wikipedia</h2>
+	  			<p>This is an alpha release of Wikispex, a project aiming to create useful and interesting displays of data from Wikipedia.  This preliminary version displays line-graphs showing trends in article size and user activity over time.  Other charts and summaries are on their way.</p>
+	  		</div>
+  		</div>
+  		<div class="row-fluid">
+  			<div class="span4">
+  				<h3>Upcoming Features</h3>
+  				<ul>
+  					<li>Support for extremely active users and articles.</li>
+  					<li>Summary pages with aggregate statistics.</li>
+  					<li>Side-by-side charting of talk pages with their articles.</li>
+  					<li>Analysis of article categories.</li>
+  					<li>No more Twitter Bootstrap default theme.</li>
+  				</ul>
+  			</div>	
+  			<div class="span4">
+  				<h3>Try these articles</h3>
+  				<p>
+  					<a class="btn btn-primary" href="#article/Nigerian Dwarf (goat)">Nigerian Dwarf Goat</a>
+  				</p>
+  				<p>
+  					<a class="btn btn-primary" href="#article/Glyphosate">Glyphosate</a>
+  				</p>
+  				<p>
+  					<a class="btn btn-primary" href="#article/Uttar Pradesh">Uttar Pradesh</a>
+  				</p>
+  			</div>
+  		</div>
+  	</div>
+  	<div class="row-fluid" id="loading" style="display:none"> <!-- root content node: loading message -->
+  		<img src="loading.gif" style="position:absolute;top:50%;left:50%"/>
+  	</div>
+  	<div id="user-history" style="display:none"> <!-- root content node: user history -->
+ 		<div class="span10">
+			<div class="row-fluid">
+				<div class="span14">
+					<div style="position:absolute;top:0px;bottom:0px;left:0px;width:13em;overflow-y:auto">
+						<span style="float:left">Page</span>
+						<span style="float:right">Edits</span>
+						<div id="user-history-page-table"></div>
+					</div>
+					<div id="user-history-chart" style="position:absolute;top:0px;bottom:0px;left:13em;right:0px;"></div>
+				</div>
+			</div>
+		</div> 		
+  	</div> <!-- end user history -->
+  	<div class="row-fluid" id="article-summary" style="display:none"> <!-- root content node: article summary -->
+  	</div>
+    <div class="row-fluid" id="article-history" style="display:none"> <!-- root content node: article history -->
+		<div class="span10">
+			<div class="row-fluid">
+				<div class="span14">
+					<div style="position:absolute;top:0px;bottom:0px;left:0px;width:15em;overflow-y:auto">
+						<span style="float:left">Author</span>
+						<span style="float:right">Edits</span>
+						<div id="article-history-author-table"></div>
+					</div>
+					<div id="sizeChart" style="position:absolute;top:0px;bottom:0px;left:15em;right:0px;"></div>
+				</div>
+			</div>
+		</div>
+	</div> <!-- end article history -->
+  </div>
+</div>
+<div id="loading" class="modal" style="display:none">
+	<img src="loading.gif"/>
+</div>
+ <div id="flyout" style="background-color:#fff;position:fixed;top:65px;bottom:0px;display:none">
+ 	<div class="row-fluid" style="height:100%">
+ 		<div id="flyout-toggle" class="span1 btn input-prepend" style="width:30px;position:absolute;left:-30px;top:3px;bottom:3px">
+ 			<div class="icon-chevron-left" style="position:absolute;top:50%;left:10px"></div>
+ 		</div>
+		<div id="revisionInfo"></div>
+		<div style="overflow-y:scroll;height:100%">
+			<div id="diffholder"/>
+		</div>
+	</div>
+</div>
+</body>
+</html>

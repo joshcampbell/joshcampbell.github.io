@@ -1,0 +1,265 @@
+<html>
+<head>
+<script src="lib/iso8601.js"></script>
+<script src="lib/underscore.js"></script>
+<script src="lib/backbone.js"></script>
+<script src="lib/jquery-1.8.3.js"></script>
+<script src="lib/bootstrap/js/bootstrap.js"></script>
+<script src="lib/flot-0.7/jquery.flot.js"></script>
+<script src="lib/flot-0.7/jquery.flot.pie.js"></script>
+<script src="lib/flot-0.7/jquery.flot.selection.js"></script>
+<script src="lib/flot-0.7/jquery.flot.navigation.js"></script>
+<script src="lib/wiky/wiky.js"></script>
+<script src="wiki.js"></script>
+<style type="text/css">
+	div.graph
+	{
+		width: 900px;
+		height: 500px;
+		border: 1px dashed gainsboro;
+	}
+	div#toolTip
+	{
+		font-size:90%;
+		/*max-width:400px;*/
+		font-family:serif;
+		border: '1px solid #fdd';
+		padding:'2px';
+		background-color:#cdc;
+		opacity:0.80;
+	}
+	.diff-addedline
+	{
+		background-color:#cfc;
+	}
+	.diff-deletedline
+	{
+		background-color:#fcc;
+	}
+	.diffchange{
+		font-weight:bold;
+	}
+</style>
+<script>
+app = {};
+app.toolTip = function(x,y,contents){
+	var css = {
+		position:'absolute',
+		display:'none',
+		top:y + 10,
+	}
+	if(x > (window.innerWidth / 2)){
+		css["left"] = x;
+	} else {
+		css["left"] = x + 10
+	}
+	$('<div id="tooltip">'+contents+"</div>").css(css).appendTo("body").fadeIn(200);
+}
+app.formatRevisionTooltip = function(revision){
+	revision = revision[0];
+	date = new Date(revision.timestamp);
+	var retval = "";
+	retval += "<p><strong>"+revision.user+"</strong> "
+	if(revision.comment)
+		retval += ' : "'+revision.comment+'" '
+	retval += "</p>"
+	if(!isNaN(revision.delta)){
+		retval += "<p>"
+		if(revision.delta < 0) retval += "- "
+		else retval += "+ "
+		retval += Math.abs(revision.delta)
+		retval += " characters. </p>"
+	}
+	retval += "<p>@ "+date.toLocaleTimeString()+" on "+date.toLocaleDateString()
+	return retval;
+}
+// ===== GRAPH TYPE DEFINITIONS =====
+app.graphs = {}
+// setup article history graphs
+app.graphs.lineDefaults = {
+	xaxis:{mode:"time"},
+	lines:{show:true},
+	points:{show:true},
+	selection: {mode: "xy"},
+	grid:{hoverable:true, clickable:true},
+	pan:{interactive:true}
+}
+app.graphs.line = function(div, data){
+	// Renders & returns a reference to a zoomable flot line graph.
+	var zoomStack = []
+	var options = $.extend(true, {}, app.graphs.lineDefaults);
+	var redraw = function(){
+		$.plot(div, [data], options);	
+	}
+	div.bind('plotselected',function (event, ranges){
+		zoomStack.push(options);
+		options = $.extend(true, {}, app.graphs.lineDefaults, {
+			xaxis:{min:ranges.xaxis.from, max:ranges.xaxis.to},
+			yaxis:{min:ranges.yaxis.from, max:ranges.yaxis.to}
+		})
+		redraw();
+	});
+	div.bind('dblclick', function(){
+		if(zoomStack.length > 0){
+			options = zoomStack.pop();
+			redraw();
+		}
+	})
+	result = {
+		div:div,
+		data:data,
+		options:options,
+		zoomStack:zoomStack,
+		redraw:redraw
+	}
+	redraw();
+	return result
+}
+// ===== PAGE INITIALIZATION =====
+$(function(){
+	wiki.setUrl("http://en.wikipedia.org/w/api.php");
+	//wiki.setUrl("http://sonichu.com/w/api.php");
+	/*wiki.query({titles:'Charizard',prop:'info'}, function(data){
+		console.dir(data);
+	});
+	wiki.on("autocomplete", function(data){
+		console.dir(data);
+	});
+	wiki.autocomplete("Cha");
+	*/
+	/*
+	wiki.on("loaded:article", function (result){
+		window.article = result.data;
+		makePieGraph = function(property, div){
+			pairs = _.compact(_.map(result.data.authors, function (author, name){
+				return {
+					label:name+" - "+author[property],
+					data:author[property]
+				}
+			}))
+			$.plot($(div), pairs,
+			{
+		        series: {
+		            pie: {
+		                innerRadius: 0.5,
+		                show: true,
+	                	combine: {
+	                    	color: '#999',
+	                    	threshold: 0.02
+	                	},
+	                	stroke:{
+	                		color:'#fff',
+	                		width:2
+	                	}
+		            }
+		        },
+		        legend:{
+	            	position:"ne"
+	            }
+			});
+		}
+		makePieGraph("count","#pieEditCount");
+		makePieGraph("bytesAdded","#pieBytesAdded");
+		makePieGraph("bytesDeleted", "#pieBytesRemoved")
+	});
+	*/
+	// ----- Draw the history graph -----
+	wiki.on("loaded:article", function(article){
+		console.dir(article);
+		var points = _.map(article.revisions, function(revision){
+			return [revision.timestamp, revision.size];
+		});
+		var chart = app.graphs.line($("#sizeChart"),points);
+		// ----- Draw the tooltip when the user hovers over a datapoint -----
+		chart.div.off();
+		chart.div.bind("plothover", function (event, pos, item){
+			if(item){
+				if(previousPoint != item.dataIndex){
+					previousPoint = item.dataIndex;
+					$("#tooltip").remove();
+					var x = item.pageX;
+					var y = item.pageY;
+					app.toolTip(x,y,app.formatRevisionTooltip(
+						_.where(article.revisions, {timestamp:item.datapoint[0]}))
+					);
+				}
+			} else {
+				$("#tooltip").remove();
+				previousPoint = null;
+			}
+		})
+		// ----- Request revision details when the user clicks a datapoint -----
+		chart.div.bind("plotclick", function (event, pos, item){
+			if(item){
+				article.getRevisionText(
+					_.where(article.revisions, {timestamp:item.datapoint[0]})[0]
+				)
+			}
+		})
+	})
+	wiki.article({title:"Chaos magic"});
+
+
+	// show full text
+	wiki.on("loaded:revision", function(revision){
+		console.dir(revision);
+		$("#textholder").html(wiky.process(revision.content));
+		$("#diffholder").html(wiky.process(revision.diff["*"]));
+		var revtext = "<p>Revision by <a href='#' onclick='wiki.user({name:\""+revision.user+"\"})'>"+revision.user+"</a> at "+new Date(revision.timestamp).toLocaleTimeString()+" on "+new Date(revision.timestamp).toLocaleDateString()+" </p>";
+		if(revision.comment){
+			revtext += '<p><strong>"'+revision.comment+'"</strong></p>';
+		}
+		$("#revisionInfo").html(revtext)
+		app.toggleFlyout();
+	})
+	// ===== USER STUFF =====
+	wiki.on("loaded:user", function(user){
+		console.dir(user)
+		var points = _.map(user.contribs, function(revision){
+			return [revision.timestamp, revision.editsToDate];
+		});
+		console.dir(points)
+		var chart = app.graphs.line($("#sizeChart"),points);
+	})
+	//wiki.user({name:"Ian Spackman"});
+	// ===== REVISION FLYOUT =====
+	app.showflyout = false;
+	app.flyoutStyle = {
+		width:window.innerWidth * .9,
+		height:window.innerHeight - 20,
+		top:10,
+		right:(window.innerWidth * .9 - 50) * -1,
+	}
+	$("#flyout").css(app.flyoutStyle);
+	app.toggleFlyout = function(){
+		app.showflyout = !app.showflyout; 
+		if(app.showflyout){
+			$("#flyout").animate({right:"50px"});
+		} else {
+			$("#flyout").animate({right:(window.innerWidth * .9 - 50) * -1});
+		}
+	}
+	$("#flyout").click(app.toggleFlyout)
+});
+</script>
+</head>
+<body>
+<div id="sizeChart" style="width:1000px; height:600px;"></div>
+<div style:"width:700px;line-height:350px">
+	<div id="pieEditCount" class="graph"></div>
+</div>
+<div style:"width:700px;height:350px">
+	<div id="pieBytesAdded" class="graph"></div>
+</div>
+<div style:"width:700px;height:350px">
+	<div id="pieBytesRemoved" class="graph"></div>
+</div>
+<h1>page text</h1>
+<div style:"max-width:800px;border:5px solid black" id="textholder"></div>
+<div id="flyout" style="background-color:#fff;position:fixed;top:20px;border:1px solid black;overflow-y:scroll">
+	<div id="revisionInfo"></div>
+	<div style:"max-width:800px;border:5px solid black" id="diffholder"></div>
+</div>
+</div>
+</body>
+</html>

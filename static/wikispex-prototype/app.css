@@ -1,0 +1,64 @@
+/* ===== PAGE LAYOUT ===== */
+body{
+	padding-top:80px;
+}
+/* ===== NAVIGATION ===== */
+#navbar .icon-chevron-right{
+	float:right;
+}
+#navbar .icon-chevron-up{
+	float:left;
+}
+/* ===== MINOR TWITTER BOOTSTRAP TWEAKS ===== */
+.navbar input, .navbar .add-on{
+	margin-top:5px;
+}
+.navbar-inner{
+	padding-top:10px;
+}
+.navbar form{
+	margin-bottom:10px;
+}
+.dropdown-menu{
+	z-index:1200;
+}
+/* ===== CHART-RELATED ===== */
+#tooltip
+{
+	font-size:90%;
+	/*max-width:400px;*/
+	font-family:serif;
+	border: 2px solid #000000;
+	padding:2px;
+	background-color:#EDC240;
+	opacity:0.75;
+}
+ul#article-history-authors
+{
+	list-style-type:none;
+	margin-left:1px;
+}
+ul#article-history-authors > li
+{
+	clear:both;
+	display:block;
+	margin-left:1px;
+}
+/* ===== REVISION DIALOG ===== */
+.diff-addedline
+{
+	background-color:#cfc;
+}
+.diff-deletedline
+{
+	background-color:#fcc;
+}
+.diffchange
+{
+		font-weight:bold;
+}
+#diffholder
+{
+	padding-left:2em;
+	padding-right:2em;
+}
