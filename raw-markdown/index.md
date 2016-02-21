@@ -4,7 +4,7 @@ title: Josh Campbell
 <pre>
 
  --------------------------------------------------------------------
-| <a href='./static/joshua-campbell-2016.pdf'>2016 Resume</a> | <a href='https://github.com/joshcampbell'>https://github.com/joshcampbell</a> | <a href="mailto:campbelj@gmail.com">campbelj@gmail.com</a> |
+| <a href='./static/joshua-campbell-2016.pdf' class='important'>2016 Resume</a> | <a href='https://github.com/joshcampbell'>https://github.com/joshcampbell</a> | <a href="mailto:campbelj@gmail.com">campbelj@gmail.com</a> |
  --------------------------------------------------------------------
         \   ^__^
          \  (oo)\_______
@@ -22,7 +22,7 @@ I've been a professional software developer since 2008. Almost all the projects 
 
 ### TextVom.it (2015)
 
-I collaborated with [Corey Bobco](https://github.com/CoreyBobco) and other members of an Uncreative Writing group to build some tools for generating nonsense text using Markov chains, which we could then edit down into coherence, use as a jumping-off point for creative writing, or just appreciate for the new perspectives it could give us on the source text(s).
+I collaborated with [Corey Bobco](https://github.com/CoreyBobco) and other members of an Uncreative Writing group to build some tools for generating nonsense text using Markov chains, which we could then edit down into coherence, use as a jumping-off point for creative writing, or just appreciate as a new perspective on the source text(s).
 
 You can interact with it using the command line, or through a web GUI backed by Flask.
 
@@ -54,7 +54,7 @@ This is a self-contained in-place editing component that I wrote alongside [Alex
 
 ### "Timeless Way" Slides (2013)
 
-The design patterns movement in software development may be long past its peak, but I think the book that inspired it ("The Timeless Way of Building" by actual architect Christopher Alexander) is still worth reading for more general insights. This was basically a book report that I delivered to my coworkers in an attempt to get them to read it.
+The design patterns movement in software development may be long past its peak, but I think the book that inspired it ("The Timeless Way of Building" by actual architect Christopher Alexander) is still worth reading for more general insights. This was basically a book report that I delivered to my coworkers in an attempt to get them to read it. The slides are [Lessig Style](http://www.presentationzen.com/presentationzen/2005/10/the_lessig_meth.html) and not very interesting on their own, but the repo also includes my lecture notes.
 
 [Repository](https://github.com/joshcampbell/alexander-presentation)
 
