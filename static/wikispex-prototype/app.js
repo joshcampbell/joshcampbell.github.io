@@ -58,7 +58,7 @@ app.graphs.line = function(div, data, ylabel){
 
 $(function(){
 // ----- Initialize Wikispex -----
-wiki.setUrl("http://en.wikipedia.org/w/api.php");
+wiki.setUrl("https://en.wikipedia.org/w/api.php");
 // ===== UI ELEMENTS =====
 // ----- Twitter bootstrap navbar -----
 $('#navbar').affix();
