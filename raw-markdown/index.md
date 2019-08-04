@@ -46,7 +46,7 @@ There's nothing interesting going on here in terms of algorithms, but it does de
 
 ### Markov Text Server (2015)
 
-I collaborated with [Corey Bobco](https://github.com/CoreyBobco) and other members of an Uncreative Writing group to build some tools for generating nonsense text using Markov chains, which we could then edit down into coherence, use as a jumping-off point for creative writing, or just appreciate as a new perspective on the source text(s).
+I collaborated with [Corey Bobco](https://github.com/CoreyBobco) and other members of an Uncreative Writing group to build some tools for generating nonsense text using Markov chains, which we could then edit down into coherence, use as a jumping-off point for creative writing, or just appreciate as a new perspective on the source texts.
 
 You can interact with it using the command line, or through a web GUI backed by Flask.
 
